@@ -7,6 +7,7 @@ const { User } = require('../user/user.model')
 const validator = require('./auth.validator')
 const web3 = require("../../web3");
 const { getNFTswithImage } = require('../../metaplex');
+const { NFT } = require('../base/nft.model');
 const conn = web3.connection;
 router.post('/auth/login', login)
 router.post('/auth/loginWithWallet', loginWallet)
@@ -43,9 +44,17 @@ async function login(req, res, next) {
         }
 
         let nfts = await getNFTswithImage(conn, wallet)
-
+        let count = 0;
+        // if user have not one nft .
         if (nfts.length == 0) return res.json({ code: "03", message: "You should to buy nfts to play this game." })
-
+        for (let nft of nfts) {
+            console.log("nft collection address ===", nft)
+            const one = await NFT.findOne({ address: nft.collection })
+            if(one) count ++;
+        }
+        // if user have not one nft including Supported NFT in system.
+        if(count == 0) return res.json({ code: "03", message: "You should to buy nfts to play this game." })
+        
         const token = jwt.sign({ id: user._id, username: user.name, role: user.role }, process.env.JWT_SECRET, {
             noTimestamp: true,
             expiresIn: '1h',

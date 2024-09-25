@@ -8,7 +8,7 @@ const web3 = require("../../web3")
 const { User } = require('../user/user.model');
 const { NFT } = require("../base/nft.model");
 const { Reward } = require("../base/reward.model");
-const { Social}= require("../base/social.model");
+const { Social} = require("../base/social.model");
 const { Character } = require("../base/character.model");
 const validator = require("./admin.validator");
 const { ObjectId } = require('../base/BaseSchema');
@@ -36,9 +36,7 @@ async function getDashboardData(req, res, next){
         let nfts = await NFT.find().populate("character");
         let result = [];
         for( let nft of nfts){
-            
             let nftMeta = await getMeta(conn, nft.address)
-            
             let characters = []
             for(let character of nft.character){
                 characters.push({
@@ -55,11 +53,22 @@ async function getDashboardData(req, res, next){
                 // metaJson: nftMeta,
             })
         }
+        let rate = await Reward.findOne({mode: "PVE"});
+        const social = await Social.find()
+        let message = "";
+        if(social.length > 0){
+            message = social[0].message;
+            
+        }else{
+            message = "";
+        }
         return res.json({code:'00', data: {
             taxWallet: process.env.ADMIN_WALLET,
             token: process.env.TOKEN_ADDRESS,
             taxPerUnit: 0.5,
-            nfts: result
+            nfts: result,
+            rate: rate?.rate,
+            xText: message,
         }})
     } catch(err) {
         console.log(err)

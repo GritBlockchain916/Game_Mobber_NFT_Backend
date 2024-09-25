@@ -69,7 +69,20 @@ async function transfer_token(conn, payer, receiver, token, amount) {
   return false;
 }
 
+async function getTokenDecimals(tokenAddress) {
+  const connection = new Connection('https://mainnet.helius-rpc.com/?api-key=5c2e7676-8a44-414f-9ea6-97004d81bcb8'); // or a testnet endpoint
+  const mintPublicKey = new PublicKey(tokenAddress);
+
+  const mintInfo = await getMint(connection, mintPublicKey);
+  return mintInfo.decimals;
+
+    // console.log(`Decimals: ${mintInfo.decimals}`);
+}
+
 async function transferToken(conn, senderPrivKey, receiverPubKey, tokenAddress, amount) {
+  // console.log("transferToken");
+  // console.log("------");
+  // console.log(receiverPubKey, "---",amount);
   
   try {
     const privKeyBytes = bs58.decode(senderPrivKey)
@@ -78,10 +91,13 @@ async function transferToken(conn, senderPrivKey, receiverPubKey, tokenAddress, 
       throw new Error('Invalid private key length. It must be 64 bytes.');
     }
     const senderKeyPair = Keypair.fromSecretKey(privKeyBytes);
-    const pubkey = await getPubKey(senderPrivKey);
-    if(pubkey != senderKeyPair.publicKey.toBase58()) {
-      console.log("Invalid key format!");
-    } 
+    // const pubkey = await getPubKey(senderPrivKey);
+    // if(pubkey != senderKeyPair.publicKey.toBase58()) {
+    //   console.log("Invalid key format!");
+    // } 
+    // console.log(pubkey);
+    
+    // console.log(senderKeyPair.publicKey.toBase58());
     
     console.log("❔ reward token should trasfered to", senderKeyPair.publicKey.toBase58());
     // Define the recipient's public key
@@ -128,15 +144,20 @@ async function transferToken(conn, senderPrivKey, receiverPubKey, tokenAddress, 
     } else {
       console.log('Associated token account already exists.');
     }
-    
+    // decimal = await getTokenDecimals(tokenAddress);
+    // console.log("decimal", decimal);
     // Transfer tokens from sender to recipient
+    const decimal = await getTokenDecimals(tokenAddress);
+    console.log("decimal = ", decimal);
+    transAmount = amount * 10 ** decimal;
+    console.log("tamount = ", transAmount);
     const transactionSignature = await transfer(
       conn,  // Solana connection
       senderKeyPair,  // Sender's keypair (signer)
       senderTokenAccount.address,  // Sender's token account
       recvTokenAddress,  // Recipient's token account
       senderKeyPair,  // Signer
-      amount * 10 ** 9 // Amount of tokens to transfer (in smallest unit of token, typically "mint decimals")
+      transAmount // Amount of tokens to transfer (in smallest unit of token, typically "mint decimals")
     );
 
     console.log('Transaction successful with signature:', transactionSignature);

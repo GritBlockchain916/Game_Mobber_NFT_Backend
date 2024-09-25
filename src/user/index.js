@@ -100,7 +100,7 @@ async function updateScore(req, res, next) {
         // if(rate) rate = rate.rate;
 
         let user = await User.findById(loginUser.id);
-        console.log("user=>", user)
+        // console.log("user=>", user)
         if (parseFloat(score) <= parseFloat(user.scores)) {
             return res.json({ code: '03', data: null, message: "Is not top score" })
         } else {
@@ -232,15 +232,14 @@ async function updateMyNFT(req, res, next) {
         let result = {
             username: user.name,
             id: user.id,
-            score: user.scores,
-            isAdmin: user.role == "admin",
+            score: user.scores,         
             nft: user.nft,
             character: character,
         }
         log({
             role: "user",
             user: loginUser.id,
-            wallet,
+            wallet: user.wallet,
             action: "updateNFT",
             model: "User",
             result: `Changed character : ${character.name}`
